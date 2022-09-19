@@ -19,6 +19,7 @@ type Table = [Row]
 main :: IO ()
 main = interact (unlines . exercise . lines)
 
+-- | input e.g. exercise ["first last gender salary", "Alice Allen female 82000", "Bob Baker male 70000", "Carol Clarke female 50000"]
 exercise :: [String] -> [String]
 exercise = printTable
          . project ["last", "first", "salary"]
@@ -107,27 +108,17 @@ select column value table@(header:rows) = header : maybe rows select' (elemIndex
     select' index = filter (predicate index value) rows
 
 -- * Exercise 8
-
+-- | Sort columns, excluding those given in the input
+-- | input e.g. project ["last", "salary", "gender", "testtesttest"] [["first", "last", "gender", "salary"], ["Alice", "Allen", "female", "82000"], ["Bob", "Baker", "male", "70000"], ["Carol", "Clarke", "female", "50000"]]
 project :: [Field] -> Table -> Table
-project columns table@(header:_) =
+project columns table@(header:_) = transpose (map filterColumns columns)
+  where
+    tranposedTable = transpose table
 
+    columnIndex :: Field -> Maybe Int
+    columnIndex value = elemIndex value header
 
-{-
-project ["last", "first", "salary"]
-
-Todo∷
-- non existent column name in input --> omit
-- column name in table not in input --> omit
-- sort columns
-
-map on input
-mapmaybe on table per input
-predicate has !! --> nothing or filter?
-transpose 2x
-
-!!
-elemIndex
-maybeMap
-map
-transpose
--}
+    filterColumns :: Field -> Row
+    filterColumns columnConstraint = maybe [] (tranposedTable !!) (index)
+      where
+        index = columnIndex columnConstraint
