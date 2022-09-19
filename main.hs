@@ -78,17 +78,13 @@ columnWidths xss = map (maximum . map length) (transpose xss)
 -- | Return a list containing the strings that represent the pretty print version of header, row and delimiter data.
 -- | input e.g. printTable [["first", "last", "gender", "salary"], ["Alice", "Allen", "female", "82000"], ["Bob", "Baker", "male", "70000"], ["Carol", "Clarke", "female", "50000"]]
 printTable :: Table -> [String]
-printTable table = printTable' 0 table
-
-printTable' :: Int -> Table -> [String]
-printTable' _ []               = []
-printTable' index table@(x:xs) | index == 0 = delimiter : (map toUpper row) : delimiter : printTable' (index + 1) xs
-                               | otherwise = row : printTable' (index + 1) xs
+printTable table@(header : rows) = delimiter : map toUpper (rowToString header) : delimiter : map rowToString rows ++  delimiter : []
   where
     widths = columnWidths table
     delimiter = printLine widths
-    rowPairs = zip widths x
-    row = printRow rowPairs
+
+    rowToString :: Row -> String
+    rowToString row = printRow (zip widths row)
 
 -- | Querying
 
