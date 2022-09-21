@@ -25,7 +25,7 @@ data Rose a = MkRose a [Rose a]
     deriving (Eq, Show)
 
 -- Exercise 1
--- | input e.g. root MkRose 1 [MkRose 4 [], MkRose 5 [], MkRose 6 [], MkRose 7 []]
+-- | input e.g. root (MkRose 1 [MkRose 4 [MkRose 100 [], MkRose 200 []], MkRose 5 [], MkRose 6 [], MkRose 7 []])
 root :: Rose a -> a
 root (MkRose a _)= a
 
@@ -33,10 +33,9 @@ children :: Rose a -> [Rose a]
 children (MkRose _ children) = children
 
 -- Exercise 2
-
 size :: Rose a -> Int
-size (MkRose _ [])     = 0
-size (MkRose _ (_:xs)) = 1 + sum (map size xs)
+size (MkRose _ [])     = 1
+size (MkRose _ children) = 1 + sum (map size children)
 
 leaves :: Rose a -> Int
 leaves (MkRose _ [])       = 1
@@ -107,21 +106,69 @@ emptyBoard :: Board
 emptyBoard = ((B, B, B), (B, B, B), (B, B, B))
 
 -- Exercise 7
-
-{-
-O| |
--+-+-
- |X|
--+-+-
- | |
--}
-
+-- | input e.g. printBoard ((X, B, B), (B, B, X), (O, B, O))
 printBoard :: Board -> String
-printBoard = undefined
+printBoard (a, b, c)= printRow a ++ printLine ++ printRow b ++ printLine ++ printRow c
+  where
+    printLine :: String
+    printLine = "-+-+-\n"
+
+    printRow :: Row -> String
+    printRow (a, b, c) = show a ++ "|" ++ show b ++ "|" ++ show c  ++ "\n"
 
 -- | Move generation
 
 -- Exercise 8
+
+{-
+begin: O B B
+
+traverseAll:
+
+O X B - 2nd
+O O B - 2nd
+
+O B X - 3rd
+O B O - 3rd
+
+movesRow with playerstate X∷
+O X B - 2
+O B X - 3
+
+
+O B B
+O B X
+compareRow --> X
+
+-}
+
+nextMoves :: Field -> [Field]
+nextMoves x | x == B = [X, O]
+            | otherwise = []
+
+rowDifference :: Row -> Row -> Maybe Field
+rowDifference current@(a, b, c) next@(p, q, r) | current == next = Nothing
+                                               | a /= p = p
+                                               | b /= q = q
+                                               | c /= r = r
+
+validRowMove :: Player -> Row -> Row -> Bool
+validRowMove playerState current next = maybe False (playerState ==) (rowDifference current next)
+
+traverseFst :: (a -> [d]) -> (a, b, c) -> [(d, b, c)]
+traverseFst = undefined
+
+traverseSnd :: (b -> [d]) -> (a, b, c) -> [(a, d, c)]
+traverseSnd = undefined
+
+traverseTrd :: (c -> [d]) -> (a, b, c) -> [(a, b, d)]
+traverseTrd = undefined
+
+traverseAll :: (a -> [a]) -> (a, a, a) -> [(a, a, a)]
+traverseAll f, row = traverseFst f row ++ traverseSnd f row ++ traverseTrd f row
+
+movesRow :: Player -> Row -> [Row]
+movesRow = undefined
 
 moves :: Player -> Board -> [Board]
 moves = undefined
