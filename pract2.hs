@@ -79,19 +79,42 @@ type Row   = (Field, Field, Field)
 type Board = (Row, Row, Row)
 
 -- Exercise 5
+fst' :: Row -> Field
+fst' (a, _, _) = a
+
+snd' :: Row -> Field
+snd' (_, b, _) = b
+
+trd' :: Row -> Field
+trd' (_, _, c) = c
 
 verticals :: Board -> (Row, Row, Row)
-verticals = undefined
+verticals brd = (vertical fst' brd, vertical snd' brd , vertical trd' brd)
+  where
+    vertical :: (Row -> Field) -> Board -> Row
+    vertical f (a, b, c) = (f a, f b, f c)
+
 
 diagonals :: Board -> (Row, Row)
-diagonals = undefined
+diagonals (a, b, c) = (diagonal (a, b, c), diagonal (c, b, a))
+  where
+    diagonal :: Board -> Row
+    diagonal (p, q, r) = (fst' p, snd' q, trd' r)
 
 -- Exercise 6
 
 emptyBoard :: Board
-emptyBoard = undefined
+emptyBoard = ((B, B, B), (B, B, B), (B, B, B))
 
 -- Exercise 7
+
+{-
+O| |
+-+-+-
+ |X|
+-+-+-
+ | |
+-}
 
 printBoard :: Board -> String
 printBoard = undefined
