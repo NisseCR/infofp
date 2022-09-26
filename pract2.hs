@@ -95,10 +95,7 @@ verticals brd = (vertical fst' brd, vertical snd' brd , vertical trd' brd)
 
 
 diagonals :: Board -> (Row, Row)
-diagonals (a, b, c) = (diagonal (a, b, c), diagonal (c, b, a))
-  where
-    diagonal :: Board -> Row
-    diagonal (p, q, r) = (fst' p, snd' q, trd' r)
+diagonals (a, b, c) = ((fst' a, snd' b, trd' c), (trd' a, snd' b, fst' c))
 
 -- Exercise 6
 
@@ -119,85 +116,96 @@ printBoard (a, b, c)= printRow a ++ printLine ++ printRow b ++ printLine ++ prin
 -- | Move generation
 
 -- Exercise 8
-
-{-
-begin: O B B
-
-traverseAll:
-
-O X B - 2nd
-O O B - 2nd
-
-O B X - 3rd
-O B O - 3rd
-
-movesRow with playerstate X∷
-O X B - 2
-O B X - 3
-
-
-O B B
-O B X
-compareRow --> X
-
--}
-
-nextMoves :: Field -> [Field]
-nextMoves x | x == B = [X, O]
-            | otherwise = []
-
-rowDifference :: Row -> Row -> Maybe Field
-rowDifference current@(a, b, c) next@(p, q, r) | current == next = Nothing
-                                               | a /= p = p
-                                               | b /= q = q
-                                               | c /= r = r
-
-validRowMove :: Player -> Row -> Row -> Bool
-validRowMove playerState current next = maybe False (playerState ==) (rowDifference current next)
+-- | input e.g. moves P1 ((X, B, B), (B, B, X), (O, B, O))
 
 traverseFst :: (a -> [d]) -> (a, b, c) -> [(d, b, c)]
-traverseFst = undefined
+traverseFst f row@(a, b, c)= map (\r -> (r, b, c)) (f a)
 
 traverseSnd :: (b -> [d]) -> (a, b, c) -> [(a, d, c)]
-traverseSnd = undefined
+traverseSnd f row@(a, b, c)= map (\r -> (a, r, c)) (f b)
 
 traverseTrd :: (c -> [d]) -> (a, b, c) -> [(a, b, d)]
-traverseTrd = undefined
+traverseTrd f row@(a, b, c)= map (\r -> (a, b, r)) (f c)
 
 traverseAll :: (a -> [a]) -> (a, a, a) -> [(a, a, a)]
-traverseAll f, row = traverseFst f row ++ traverseSnd f row ++ traverseTrd f row
+traverseAll f row = traverseFst f row ++ traverseSnd f row ++ traverseTrd f row
+
+movesField :: Player -> Field -> [Field]
+movesField player x | x /= B = []
+                    | player == P1 = [X]
+                    | otherwise = [O]
+
 
 movesRow :: Player -> Row -> [Row]
-movesRow = undefined
+movesRow player r = traverseAll (movesField player) r
 
 moves :: Player -> Board -> [Board]
-moves = undefined
+moves player brd@(x, y, z) = map (\r -> (r, y, z)) (movesRow player x)
+                             ++ map (\r -> (x, r, z)) (movesRow player y)
+                             ++ map (\r -> (x, y, r)) (movesRow player z)
 
 -- | Gametree generation
 
 -- Exercise 9
-
+-- | input e.g. hasWinner ((X, B, O), (B, X, X), (O, B, X))   // P1
+-- | input e.g. hasWinner ((X, B, O), (B, X, X), (O, B, B))   // P2
 hasWinner :: Board -> Maybe Player
-hasWinner = undefined
+hasWinner brd | w1 && w2 = Nothing
+              | w1 = Just P1
+              | w2 = Just P2
+              | otherwise = Nothing
+  where
+    boardToList :: Board -> [Row]
+    boardToList (a, b, c) = a : b : c : []
+
+    diagonalsToList :: (Row, Row) -> [Row]
+    diagonalsToList (a, b) = a : b : []
+
+    rowChecks :: [Row]
+    rowChecks = boardToList brd
+              ++ boardToList (verticals brd)
+              ++ diagonalsToList (diagonals brd)
+
+    winnerRow :: Player -> Row -> Bool
+    winnerRow player (a, b, c) = a == b && b == c && (symbol player) == a
+
+    isWinner :: Player -> [Row] -> Bool
+    isWinner _ [] = False
+    isWinner player (x:xs) = winnerRow player x || isWinner player xs
+
+    w1 :: Bool
+    w1 = isWinner P1 rowChecks
+
+    w2 :: Bool
+    w2 = isWinner P2 rowChecks
 
 -- Exercise 10
-
+-- | input e.g. gameTree P1 emptyBoard
+-- | input e.g. gameTree P1 ((O, O, B), (X, O, B), (X, B, X))
 gameTree :: Player -> Board -> Rose Board
-gameTree = undefined
+gameTree player brd | isJust(hasWinner brd) = MkRose brd []
+                    | otherwise = MkRose brd children
+  where
+    children :: [Rose Board]
+    children = map (gameTree (nextPlayer player)) (moves player brd)
+
 
 -- | Game complexity
 
 -- Exercise 11
 
 gameTreeComplexity :: Int
-gameTreeComplexity = undefined
+gameTreeComplexity = leaves (gameTree P1 emptyBoard)
 
 -- | Minimax
 
 -- Exercise 12
 
 minimax :: Player -> Rose Board -> Rose Int
-minimax = undefined
+minimax player (MkRose brd [])     | hasWinner brd == Just player = MkRose 1 []
+                                   | hasWinner brd == Nothing = MkRose 0 []
+                                   | otherwise = MkRose -1 []
+minimax player (MkRose brd (x:xs)) =
 
 -- * Lazier minimum and maximums
 
